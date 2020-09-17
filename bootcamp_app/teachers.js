@@ -9,18 +9,22 @@ const pool = new Pool({
 
 console.log('connected');
 
-pool.query(`
-  SELECT DISTINCT teachers.name AS teacher, cohorts.name AS cohort
-  FROM teachers
-  JOIN assistance_requests ON teachers.id = teacher_id
-  JOIN students ON student_id = students.id
-  JOIN cohorts ON cohort_id = cohorts.id
-  WHERE cohorts.name = '${process.argv[2] || 'JUL02'}'
-  ORDER BY teacher;
-`)
-.then(res => {
-  res.rows.forEach(row =>{
-    console.log(`${row.cohort}: ${row.teacher}`)
+const text = `
+SELECT DISTINCT teachers.name AS teacher, cohorts.name AS cohort
+FROM teachers
+JOIN assistance_requests ON teachers.id = teacher_id
+JOIN students ON student_id = students.id
+JOIN cohorts ON cohort_id = cohorts.id
+WHERE cohorts.name = $1
+ORDER BY teacher;
+`
+const values = [`${process.argv[2] || 'JUL02'}`];
+
+pool
+  .query(text, values)
+  .then(res => {
+    res.rows.forEach(row => {
+      console.log(`${row.cohort}: ${row.teacher}`)
+    })
   })
-})
-.catch(err => console.error('query error:', err.stack));
+  .catch(err => console.error('query error:', err.stack));
